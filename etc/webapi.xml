@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
+    <route url="/V1/sqquid/updateProducts" method="POST">
+        <service class="Sqquid\Sync\Api\ProductManagementInterface" method="updateProducts"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
+    <route method="POST" url="/v2/sqquid/sync">
+        <service class="Sqquid\Sync\Api\QueueManagementInterface" method="updateQueue"/>
+
+        <resources>
+            <resource ref="admin"/>
+        </resources>
+        <data>
+            <parameter name="id" force="true">%admin_id%</parameter>
+        </data>
+
+    </route>
+</routes>

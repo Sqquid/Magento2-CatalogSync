@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="sqquid" translate="label" sortOrder="10">
+            <label>Sqquid</label>
+        </tab>
+        <section id="sqquid_general" translate="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>General Setting</label>
+            <tab>sqquid</tab>
+            <resource>Sqquid_Sync::sqquid_general_configuration</resource>
+            <group id="setup" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Integration Setup</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <!--<field id="api_key" translate="label" type="password" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>API Key</label>
+                    <comment>You can get this value from your account on https://app.sqquid.com/</comment>
+                </field>-->
+            </group>
+
+            <group id="categories" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Category Settings</label>
+                <field id="root_category" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Select Category</label>
+                    <source_model>Sqquid\Sync\Model\Config\Source\Category</source_model>
+                </field>
+            </group>
+
+            <group id="visiblity" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Visibility</label>
+                <field id="visibility_id" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Visibility</label>
+                    <source_model>Sqquid\Sync\Model\Config\Source\Visibility</source_model>
+                </field>
+                <field id="overwrite_visibility" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Overwrite Visibility on Resynch</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+            </group>
+
+            <group id="taxclass" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Tax Class</label>
+                <field id="assigntaxclass" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Assign Tax Class</label>
+                    <source_model>Sqquid\Sync\Model\Config\Source\Taxclass</source_model>
+                </field>
+                <field id="overwritetaxclass" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Overwrite Tax Class</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+            </group>
+
+            <group id="advanced" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Advanced</label>
+                <field id="batch_size" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Processing Batch Size</label>
+                </field>
+                <field id="log_file" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Log File name</label>
+                </field>
+            </group>
+			
+        </section>
+    </system>
+</config>

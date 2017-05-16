@@ -1,0 +1,26 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <sqquid_general>
+            <setup>
+                <enabled>0</enabled>
+            </setup>
+            <advanced>
+                <batch_size>250</batch_size>
+                <log_file>sqquid_sync.log</log_file>
+            </advanced>
+            <categories>
+                <root_category>2</root_category>
+            </categories>
+            <taxclass>
+                <assigntaxclass>0</assigntaxclass>
+                <overwritetaxclass>0</overwritetaxclass>
+            </taxclass>
+            <visiblity>
+                <visibility_id>4</visibility_id>
+                <overwrite_visibility>0</overwrite_visibility>
+            </visiblity>
+
+
+        </sqquid_general>
+    </default>
+</config>
