@@ -135,7 +135,7 @@ class CategoriesSync
      *
      * @return $this
      */
-    protected function initCategories()
+    public function initCategories()
     {
         $collection = $this->categoryColFactory->create()->addNameToResult();
         /* @var $collection \Magento\Catalog\Model\ResourceModel\Category\Collection */

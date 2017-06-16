@@ -45,9 +45,9 @@ class Data extends AbstractHelper
         return $this->getConfigValue($code, $storeId);
     }
 
-    public function convertStringToCode($groupName)
+    public function convertStringToCode($string)
     {
-        return trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($groupName)), '-');
+        return trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($string)), '-');
     }
 
     public function formatBytes($bytes)

@@ -38,15 +38,15 @@ class Queue extends AbstractDb
 
     /**
      * Set the item in the queue as processing
-     *
      * @param $id
-     * @return mixed
+     * @param int $value
+     * @return bool
      */
-    public function setProcessing($id) {
+    public function setProcessing($id, $value = 1) {
         if ($id) {
             $this->getConnection()->update(
                 $this->getMainTable(),
-                ['processing' => 1],
+                ['processing' => $value],
                 ['id = ?' => (int)$id]
             );
 
@@ -54,6 +54,16 @@ class Queue extends AbstractDb
         }
 
         return false;
+    }
+
+    public function getProcessing($id) {
+        $select = $this->getConnection()->select()->from(
+            $this->getMainTable(),
+            'processing'
+        )->where(
+            'id = :id'
+        );
+        return $this->getConnection()->fetchOne($select, [':id' => $id]);
     }
 }
 

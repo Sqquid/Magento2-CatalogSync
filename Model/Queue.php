@@ -34,8 +34,10 @@ class Queue extends AbstractModel
      */
 
 
-    public function setProcessing($id){
-        return $this->_getResource()->setProcessing($id);
+    public function setProcessing($id, $value = 1){
+        return $this->_getResource()->setProcessing($id, $value);
     }
+
+
 }
 

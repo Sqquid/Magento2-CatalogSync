@@ -7,6 +7,7 @@ class Worker
 
     protected $logger;
     protected $jsonDecoder;
+    protected $schedule;
 
     protected $queueCollection;
     protected $queueItem;
@@ -29,7 +30,8 @@ class Worker
         \Sqquid\Sync\Helper\Data $sqquidHelper,
         \Sqquid\Sync\Model\Services\ProductsSync $productsSync,
         \Sqquid\Sync\Model\Services\AttributesSync $attributesSync,
-        \Sqquid\Sync\Model\Services\CategoriesSync $categoriesSync
+        \Sqquid\Sync\Model\Services\CategoriesSync $categoriesSync,
+        \Magento\Cron\Model\Schedule $schedule
 
     )
     {
@@ -42,8 +44,12 @@ class Worker
         $this->logger = $logger;
         $this->jsonDecoder = $jsonDecoder;
         $this->sqquidHelper = $sqquidHelper;
+        $this->schedule = $schedule;
 
-        //$appState->setAreaCode('adminhtml'); // for CLI testing
+        if (strstr($_SERVER['PHP_SELF'], 'n98-magerun2')) {
+            $appState->setAreaCode('adminhtml'); // for CLI testing
+        }
+
     }
 
 
@@ -57,11 +63,29 @@ class Worker
             return $this;
         }
 
+        if ($this->isRunningCurrently()) {
+            return $this;
+        }
+
         $batchSize = $this->sqquidHelper->getStoreConfigValue('sqquid_general/advanced/batch_size');
 
         $this->processBatch($batchSize);
 
         return $this;
+    }
+
+    public function isRunningCurrently()
+    {
+        $schedule = $this->schedule->getCollection()
+            ->addFieldToFilter('job_code', 'sqquid_sync_worker')
+            ->addFieldToFilter('status', 'running');
+
+        if ($schedule->count() > 1) { // 1 meaning the current job
+            return true;
+        }
+
+        return false;
+
     }
 
 
@@ -73,7 +97,7 @@ class Worker
     {
 
         $queueItems = $this->queueCollection->getNext($batchSize, 1);
-
+        $totalProcessed = 0;
         if (count($queueItems) == 0) {
             return $this;
         }
@@ -85,19 +109,35 @@ class Worker
 
         foreach ($queueItems as $item) {
 
+            if ($this->queueItem->getProcessing($item->getId()) == 1) {
+                continue; // we do this to make sure this isn't being consumed by another parallel cron processes
+            }
+
+            $error = false;
+
             try {
 
                 $this->queueItem->setProcessing($item->getId());
                 $this->processQueueItem($item);
+                $totalProcessed++;
 
             } catch (\Exception $e) {
 
                 //TODO: (low priority) try and use transactions in case that the process fails. For now, add good logging for all cases
+                $error = true;
+                $this->logger->error('------------------------');
+                $this->logger->error('Queue ID# ' . $item->getId());
                 $this->logger->error($e->getMessage());
+                $this->logger->error($e->getTraceAsString());
+                //$this->logger->error(mysql_error());
 
             }
 
-            $item->delete();
+            if (!$error) {
+                $item->delete();
+            } else {
+                $this->queueItem->setProcessing($item->getId(), 2);
+            }
 
         }
 
@@ -105,8 +145,7 @@ class Worker
         $endTime = microtime(true);
         $timeSpent = $this->sqquidHelper->secondsToTime($endTime - $startTime);
         $memoryUsed = $this->sqquidHelper->formatBytes($memoryEnd - $memoryStart);
-        $this->logger->info("# " . $queueKey . " | (Ending Queue) | " . $batchSize . " | Memory Used: " . $memoryUsed. ' | Time: '.$timeSpent);
-
+        $this->logger->info("# " . $queueKey . " | (Ending Queue) | Batched: " . $batchSize . " | # Processed: " . $totalProcessed . " | Memory Used: " . $memoryUsed . ' | Time: ' . $timeSpent);
 
         return $this;
     }
@@ -138,7 +177,7 @@ class Worker
 
         }
 
-        $categoryIds = $this->categoriesSync->getOrCreateCategoryIds($data); // we do this out here so we can keep the cache alive in this model
+        $categoryIds = $this->categoriesSync->getOrCreateCategoryIds($data);
         $product = $this->productsSync->createOrUpdate($data, false, $configurableProductsData, $categoryIds);
         $this->attributesSync->processAttributes($product, $data);
 

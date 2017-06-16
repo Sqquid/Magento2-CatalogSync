@@ -108,11 +108,22 @@ class AttributesSync
 
         foreach ($data['Attributes'] as $attribute) {
 
+
             if (is_null($attribute['value'])) {
                 continue;
             }
 
-            $productAttributeData[] = $this->setAttributeData($product, $attribute['label'], $attribute['value']);
+            $type = null;
+
+            if (isset($attribute['type'])) {
+                $type = $attribute['type'];
+            }
+
+
+            if ($result = $this->setAttributeData($product, $attribute['label'], $attribute['value'], $type)) {
+                $productAttributeData[] = $result;
+            }
+
 
         }
 
@@ -121,25 +132,34 @@ class AttributesSync
     }
 
 
-    protected function setAttributeData(\Magento\Catalog\Model\Product $product, $label, $value)
+    protected function setAttributeData(\Magento\Catalog\Model\Product $product, $label, $value, $type='select')
     {
 
-        $attribute = $this->findOrCreateAttribute($label);
-        $valueId = $this->findOrCreateValue($attribute, $value);
-        $product->setData($attribute->getAttributeCode(), $valueId);
-        $this->productResource->saveAttribute($product, $attribute->getAttributeCode());
+        $attribute = $this->findOrCreateAttribute($label, $type);
 
-        $configurationData = [
-            'label' => $attribute->getStoreLabel(),
-            'attribute_id' => $attribute->getId(),
-            'attribute_code' => $attribute->getAttributeCode(),
-            'value_index' => $valueId,
-            'value_label' => $value,
-            'pricing_value' => $product->getPrice()
-        ];
+        if ($type == 'text') {
+            $product->setCustomAttribute($attribute->getAttributeCode(), $value);
+            $product->save();
+        }
 
-        return $configurationData;
+        if ($type == 'select') {
+            $valueId = $this->findOrCreateValue($attribute, $value);
+            $product->setData($attribute->getAttributeCode(), $valueId);
+            $this->productResource->saveAttribute($product, $attribute->getAttributeCode());
 
+            $configurationData = [
+                'label' => $attribute->getStoreLabel(),
+                'attribute_id' => $attribute->getId(),
+                'attribute_code' => $attribute->getAttributeCode(),
+                'value_index' => $valueId,
+                'value_label' => $value,
+                'pricing_value' => $product->getPrice()
+            ];
+
+            return $configurationData;
+        }
+
+        return null;
     }
 
 
@@ -221,21 +241,21 @@ class AttributesSync
         return false;
     }
 
-    protected function findOrCreateAttribute($label)
+    protected function findOrCreateAttribute($label, $type)
     {
-
-        if (isset($this->cacheAttributeData[$label])) {
-            return $this->cacheAttributeData[$label];
+        $code = $label . '-' . $type;
+        if (isset($this->cacheAttributeData[$code])) {
+            return $this->cacheAttributeData[$code];
         }
 
-        $attribute = $this->findOrCreateAttributeFromDatabase($label);
-        $this->cacheAttributeData[$label] = $attribute;
+        $attribute = $this->findOrCreateAttributeFromDatabase($label, $type);
+        $this->cacheAttributeData[$code] = $attribute;
         return $attribute;
 
     }
 
 
-    public function findOrCreateAttributeFromDatabase($label, $attribute_type = 'select', $product_type = "")
+    public function findOrCreateAttributeFromDatabase($label, $attribute_type)
     {
 
         $code = $this->sqquidHelper->convertStringToCode($label);
@@ -261,7 +281,7 @@ class AttributesSync
             'group' => $this->groupName,
             'attribute_code' => $attribute_code,
             'frontend_label' => $label,
-            'backend_type' => 'int',
+            'backend_type' => '',
             'frontend_input' => $attribute_type,
             'is_required' => false,
             'is_unique' => false,
@@ -295,6 +315,9 @@ class AttributesSync
     public function attachAttributesFromChildData($product, $configurableProductsData)
     {
 
+        if (!$configurableProductsData) {
+            return $product;
+        }
         $associatedProductIds = array_keys($configurableProductsData);
 
         $tempValueArray = [];

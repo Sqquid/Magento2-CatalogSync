@@ -12,6 +12,7 @@ class ProductsSync
     protected $resourceConnection;
     protected $productRepository;
     protected $registry;
+    protected $transactionFactory;
 
     protected $sqquidHelper;
     protected $visibility;
@@ -30,15 +31,16 @@ class ProductsSync
         \Magento\Eav\Api\AttributeRepositoryInterface $eavAttributeRepository,
         \Magento\Framework\App\ResourceConnection $resourceConnection,
         \Magento\Catalog\Model\ProductRepository $productRepository,
-        \Magento\Framework\Registry $registry
+        \Magento\Framework\Registry $registry,
+        \Magento\Framework\DB\TransactionFactory $transactionFactory
     )
     {
 
         // \Magento\Catalog\Api\ProductRepositoryInterface $productRepository,
 
         $this->storeId = \Magento\Store\Model\Store::DEFAULT_STORE_ID;
-
         $this->logger = $logger;
+        $this->transactionFactory = $transactionFactory;
 
         $this->productFactory = $productFactory;
         $this->sqquidHelper = $sqquidHelper;
@@ -82,6 +84,48 @@ class ProductsSync
 
     }
 
+    public function productSave(\Magento\Catalog\Model\Product $product, $num = 0)
+    {
+
+        if ($num !== 0) {
+            $oldKey = $product->getUrlKey();
+            $product->setUrlKey($oldKey . '-' . $num);
+        }
+
+        try {
+
+            $saveTransaction = $this->transactionFactory->create();
+            $saveTransaction->addObject($product);
+            $saveTransaction->save();
+
+            //$product->save();
+
+        } catch (\Magento\Framework\Exception\AlreadyExistsException $e) {
+
+
+            /**
+             * TODO: Make this better somehow
+             *
+             * Dear other developers. At this point in the game I want to know if the product URL key is conflicting with anything else.
+             * It's just that I want to know if the exception is "AlreadyExistsException".. I also need to know if this exception
+             * pertains to the URL key. What's the best way to do this?
+             *
+             */
+            if ($e->getMessage() == 'URL key for specified store already exists.') {
+
+                // this means is conflicting with another URL in the catalog.. maybe CMS.. maybe Categories
+                $num++;
+                $product = $this->productSave($product, $num);
+
+            } else {
+                throw $e; // get caught up the stream
+
+            }
+        }
+
+        return $product;
+
+    }
 
     /**
      * Create or update a simple product, return the product
@@ -108,7 +152,6 @@ class ProductsSync
             ->setAttributeSetId(4)
             ->setWebsiteIds([1])
             ->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED);
-
 
         //actual data from our json
         $product
@@ -137,45 +180,16 @@ class ProductsSync
                 $product = $this->setInventory($product, $isAssociatedProduct);
             }
 
-            $product->save();
-            return $product;
+            return $this->productSave($product);
         }
 
         // CONFIGURABLE STUFF !!!!
 
         $product->setTypeId(\Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE);
         $product->setStockData(['use_config_manage_stock' => 1, 'is_in_stock' => 1]);
+
         $product = $this->attributesSync->attachAttributesFromChildData($product, $configurableProductsData);
-
-        try {
-
-            $product->save();
-
-        } catch (\Magento\Framework\Exception\AlreadyExistsException $e) {
-
-
-            /**
-             * TODO: Make this better somehow
-             *
-             * Dear other developers. At this point in the game I want to know if the product URL key is conflicting with anything else.
-             * It's just that I want to know if the exception is "AlreadyExistsException".. I also need to know if this exception
-             * pertains to the URL key. What's the best way to do this?
-             *
-             */
-            if ($e->getMessage() == 'URL key for specified store already exists.') {
-
-                // this means is conflicting with another URL in the catalog.. maybe CMS.. maybe Categories
-
-                $oldKey = $product->getUrlKey();
-                $product->setUrlKey($oldKey . '-0'); // just so we can move forward. TODO: Make this better somehow
-                $product->save();
-
-            } else {
-
-                throw $e; // get caught up the stream
-
-            }
-        }
+        $product = $this->productSave($product);
 
         if ($product->setIsObjectNew() == false) {
             $this->removeOldAssociatedProducts($product, array_keys($configurableProductsData));
@@ -197,10 +211,10 @@ class ProductsSync
 
         foreach ($children as $child) {
             if (in_array($child->getId(), $correctChildIds)) {
-                coninute; // cool. no need to do anything.. we like this product.
+                continue; // cool. no need to do anything.. we like this product.
             }
             $this->registry->register('isSecureArea', true);
-            $this->productRepository->delete($product);
+            $this->productRepository->delete($child);
         }
     }
 
