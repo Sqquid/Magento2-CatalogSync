@@ -134,7 +134,7 @@ class ProductsSync
     {
 
         if (!isset($data['sku']) || !isset($data['name'])) {
-            return Mage::throwException('Some Message');
+            throw new Exception('Data is Missing.');
         }
 
         $product = $this->productFactory->create();
