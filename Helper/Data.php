@@ -9,14 +9,16 @@ use Magento\Store\Model\ScopeInterface;
 class Data extends AbstractHelper
 {
 
-    protected $storeManager;
-    protected $objectManager;
+    private $storeManager;
+    private $objectManager;
 
     const XML_PATH_IMPORTSETTING = 'sqquid_general/';
 
-    public function __construct(Context $context, ObjectManagerInterface $objectManager, StoreManagerInterface $storeManager
-    )
-    {
+    public function __construct(
+        Context $context,
+        ObjectManagerInterface $objectManager,
+        StoreManagerInterface $storeManager
+    ) {
         $this->objectManager = $objectManager;
         $this->storeManager = $storeManager;
         parent::__construct($context);
@@ -24,9 +26,7 @@ class Data extends AbstractHelper
 
     public function getConfigValue($field, $storeId = null)
     {
-        return $this->scopeConfig->getValue(
-            $field, ScopeInterface::SCOPE_STORE, $storeId
-        );
+        return $this->scopeConfig->getValue($field, ScopeInterface::SCOPE_STORE, $storeId);
     }
 
     public function getTaxclassConfig($code, $storeId = null)
@@ -38,7 +38,6 @@ class Data extends AbstractHelper
     {
         return $this->getConfigValue(self::XML_PATH_IMPORTSETTING . 'visiblity/' . $code, $storeId);
     }
-
 
     public function getStoreConfigValue($code, $storeId = null)
     {

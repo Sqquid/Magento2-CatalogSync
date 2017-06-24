@@ -260,7 +260,7 @@ interface ProductInformationInterface
 
     /**
      * Sets categories
-     * @param string[] 
+     * @param string[]
      * @return void
      */
     public function setCategories($categories);

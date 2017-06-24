@@ -6,7 +6,6 @@ use Magento\Catalog\Model\Product\Type as ProductType;
 
 class ProductsSync
 {
-
     protected $logger;
     protected $productFactory;
     protected $resourceConnection;
@@ -124,7 +123,6 @@ class ProductsSync
         }
 
         return $product;
-
     }
 
     /**
@@ -132,9 +130,8 @@ class ProductsSync
      */
     public function createOrUpdate(array $data, bool $isAssociatedProduct, array $configurableProductsData = null, array $categoryIds = null)
     {
-
         if (!isset($data['sku']) || !isset($data['name'])) {
-            throw new Exception('Data is Missing.');
+            throw new \InvalidArgumentException('Data is Missing.');
         }
 
         $product = $this->productFactory->create();
