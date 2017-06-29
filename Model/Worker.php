@@ -165,7 +165,6 @@ class Worker
             foreach ($data['children'] as $childData) {
 
                 if (!$product = $this->productsSync->createOrUpdate($childData, true)) {
-                    $this->logger->error('Child Product not created:: ' . print_r($childData, TRUE));
                     continue;
                 }
 
@@ -178,8 +177,10 @@ class Worker
         }
 
         $categoryIds = $this->categoriesSync->getOrCreateCategoryIds($data);
-        $product = $this->productsSync->createOrUpdate($data, false, $configurableProductsData, $categoryIds);
-        $this->attributesSync->processAttributes($product, $data);
+
+        if ($product = $this->productsSync->createOrUpdate($data, false, $configurableProductsData, $categoryIds)) {
+            $this->attributesSync->processAttributes($product, $data);
+        }
 
         return;
     }

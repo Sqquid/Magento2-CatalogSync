@@ -90,8 +90,15 @@ class AttributesSync
 
         }
 
+        $this->setExclusionAttribute();
 
     }
+
+    protected function setExclusionAttribute()
+    {
+      $this->findOrCreateAttribute('Exclude', 'boolean', 'Magento\Eav\Model\Entity\Attribute\Source\Boolean');
+    }
+
 
     /**
      * @param \Magento\Catalog\Model\Product $product
@@ -100,6 +107,7 @@ class AttributesSync
      */
     public function processAttributes(\Magento\Catalog\Model\Product $product, $data)
     {
+
         if (!isset($data['Attributes'])) {
             return false;
         }
@@ -132,31 +140,44 @@ class AttributesSync
     }
 
 
-    protected function setAttributeData(\Magento\Catalog\Model\Product $product, $label, $value, $type='select')
+    protected function setAttributeData(\Magento\Catalog\Model\Product $product, $label, $value, $type = 'select')
     {
 
-        $attribute = $this->findOrCreateAttribute($label, $type);
+        $createType = $type == 'configurable_select' ? 'select' : $type;
+        $attribute = $this->findOrCreateAttribute($label, $createType);
+
 
         if ($type == 'text') {
-            $product->setCustomAttribute($attribute->getAttributeCode(), $value);
-            $product->save();
+
+            if ($product->getData($attribute->getAttributeCode()) != $value) {
+                $product->setData($attribute->getAttributeCode(), $value);
+                $this->productResource->saveAttribute($product, $attribute->getAttributeCode());
+            }
+
         }
 
-        if ($type == 'select') {
+        if ($type == 'select' || $type == 'configurable_select') {
+
             $valueId = $this->findOrCreateValue($attribute, $value);
-            $product->setData($attribute->getAttributeCode(), $valueId);
-            $this->productResource->saveAttribute($product, $attribute->getAttributeCode());
 
-            $configurationData = [
-                'label' => $attribute->getStoreLabel(),
-                'attribute_id' => $attribute->getId(),
-                'attribute_code' => $attribute->getAttributeCode(),
-                'value_index' => $valueId,
-                'value_label' => $value,
-                'pricing_value' => $product->getPrice()
-            ];
+            if ($product->getAttributeText($attribute->getAttributeCode()) != $value) {
+                $product->setData($attribute->getAttributeCode(), $valueId);
+                $this->productResource->saveAttribute($product, $attribute->getAttributeCode());
+            }
 
-            return $configurationData;
+            if ($type == 'configurable_select') {
+                $configurationData = [
+                    'label' => $attribute->getStoreLabel(),
+                    'attribute_id' => $attribute->getId(),
+                    'attribute_code' => $attribute->getAttributeCode(),
+                    'value_index' => $valueId,
+                    'value_label' => $value,
+                    'pricing_value' => $product->getPrice()
+                ];
+
+                return $configurationData;
+            }
+
         }
 
         return null;
@@ -241,21 +262,21 @@ class AttributesSync
         return false;
     }
 
-    protected function findOrCreateAttribute($label, $type)
+    protected function findOrCreateAttribute($label, $type, $source = null)
     {
         $code = $label . '-' . $type;
         if (isset($this->cacheAttributeData[$code])) {
             return $this->cacheAttributeData[$code];
         }
 
-        $attribute = $this->findOrCreateAttributeFromDatabase($label, $type);
+        $attribute = $this->findOrCreateAttributeFromDatabase($label, $type, $source);
         $this->cacheAttributeData[$code] = $attribute;
         return $attribute;
 
     }
 
 
-    public function findOrCreateAttributeFromDatabase($label, $attribute_type)
+    public function findOrCreateAttributeFromDatabase($label, $attribute_type, $source = null)
     {
 
         $code = $this->sqquidHelper->convertStringToCode($label);
@@ -277,7 +298,8 @@ class AttributesSync
 
         $attribute = $this->productAttributeInterfaceFactory->create();
         $attribute->setEntityTypeId($this->entityTypeId);
-        $attribute->setData([
+
+        $data = [
             'group' => $this->groupName,
             'attribute_code' => $attribute_code,
             'frontend_label' => $label,
@@ -293,7 +315,14 @@ class AttributesSync
             'comparable' => true,
             'visible_on_front' => true,
             'visible' => true
-        ]);
+        ];
+
+        if ($source) {
+            $data['source'] = $source;
+        }
+
+        $attribute->setData($data);
+
 
         $this->productAttributeRepositoryInterface->save($attribute);
 
@@ -302,8 +331,7 @@ class AttributesSync
             ->setEntityTypeId($this->entityTypeId)
             ->setAttributeGroupId($this->sqquidGroup->getId())
             ->setAttributeId($attribute->getId())
-            ->setSortOrder(10)
-           ;
+            ->setSortOrder(0);
 
         $attributeEntity->save();
 

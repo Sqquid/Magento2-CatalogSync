@@ -6,12 +6,14 @@ use Magento\Catalog\Model\Product\Type as ProductType;
 
 class ProductsSync
 {
+
     protected $logger;
     protected $productFactory;
     protected $resourceConnection;
     protected $productRepository;
     protected $registry;
     protected $transactionFactory;
+    protected $stockItemRepository;
 
     protected $sqquidHelper;
     protected $visibility;
@@ -31,7 +33,8 @@ class ProductsSync
         \Magento\Framework\App\ResourceConnection $resourceConnection,
         \Magento\Catalog\Model\ProductRepository $productRepository,
         \Magento\Framework\Registry $registry,
-        \Magento\Framework\DB\TransactionFactory $transactionFactory
+        \Magento\Framework\DB\TransactionFactory $transactionFactory,
+        \Magento\CatalogInventory\Model\Stock\StockItemRepository $stockItemRepository
     )
     {
 
@@ -42,6 +45,7 @@ class ProductsSync
         $this->transactionFactory = $transactionFactory;
 
         $this->productFactory = $productFactory;
+        $this->stockItemRepository = $stockItemRepository;
         $this->sqquidHelper = $sqquidHelper;
         $this->attributesSync = $attributesSync;
         $this->eavAttributeRepository = $eavAttributeRepository;
@@ -123,6 +127,7 @@ class ProductsSync
         }
 
         return $product;
+
     }
 
     /**
@@ -130,8 +135,9 @@ class ProductsSync
      */
     public function createOrUpdate(array $data, bool $isAssociatedProduct, array $configurableProductsData = null, array $categoryIds = null)
     {
+
         if (!isset($data['sku']) || !isset($data['name'])) {
-            throw new \InvalidArgumentException('Data is Missing.');
+            throw new Exception('Data is Missing.');
         }
 
         $product = $this->productFactory->create();
@@ -139,6 +145,11 @@ class ProductsSync
         if ($productId = $product->getIdBySku($data['sku'])) {
             $product->load($productId);
             $product->setIsObjectNew(false);
+
+            if ($product->getSqquidExclude() === '1') {
+                return false; // we need to skip it
+            }
+
         } else {
             $product->setIsObjectNew(true);
         }
@@ -159,6 +170,7 @@ class ProductsSync
             ->setPrice($data['price'])
             ->setWeight($data['weight']);
 
+        $product->setSpecialPrice($data['priceSpecial']);
 
         $product = $this->setVisibility($product, $isAssociatedProduct);
         $product = $this->setTaxClassId($product);
@@ -282,6 +294,12 @@ class ProductsSync
      */
     private function setInventory(\Magento\Catalog\Model\Product $product, $qty)
     {
+
+        $productStock = $this->stockItemRepository->get($product->getId());
+        if ($productStock->getQty() == $qty){
+            return $product;
+        }
+
         $product
             ->setQuantityAndStockStatus(['qty' => $qty, 'is_in_stock' => 1])
             ->setStockData(array(

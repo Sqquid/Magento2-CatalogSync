@@ -2,8 +2,13 @@
 
 namespace Sqquid\Sync\Logger;
 
+
+//use Magento\Framework\Filesystem\DriverInterface;
+
 class Handler extends \Magento\Framework\Logger\Handler\Base
 {
-    private $fileName = '/var/log/sqquid_sync.log';
-    private $loggerType = \Monolog\Logger::DEBUG;
+    protected $fileName = '/var/log/sqquid_sync.log';
+    protected $loggerType = \Monolog\Logger::DEBUG;
+
 }
+
