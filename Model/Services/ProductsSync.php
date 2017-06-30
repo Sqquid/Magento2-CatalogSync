@@ -133,7 +133,7 @@ class ProductsSync
     /**
      * Create or update a simple product, return the product
      */
-    public function createOrUpdate(array $data, bool $isAssociatedProduct, array $configurableProductsData = null, array $categoryIds = null)
+    public function createOrUpdate($data, $isAssociatedProduct, $configurableProductsData = null, $categoryIds = null)
     {
 
         if (!isset($data['sku']) || !isset($data['name'])) {

@@ -13,7 +13,7 @@ Learn more: [Sqquid.com](https://sqquid.com)
 It's a good way to stay up to date with the latest version.
 
 1. Run `composer require sqquid/module-sync`
-2. Update Magento2 `php bin/magento update`
+2. Update Magento2 `php bin/magento setup:upgrade`
 3. Clear the cache `php bin/magento cache:flush`
 4. Compile `php bin/magento setup:di:compile`
 
