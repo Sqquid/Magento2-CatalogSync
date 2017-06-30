@@ -20,3 +20,4 @@ It's a good way to stay up to date with the latest version.
 #### Installation Video
 
 Here's a short video on how to install our Sqquid Sync extension in under 5 minutes: [Sqquid Sync Installation on Magento 2 Video](https://www.youtube.com/watch?v=NjluSXcYMhk&t=3s)
+
