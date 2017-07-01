@@ -214,7 +214,7 @@ class ProductsSync
      * @param \Magento\Catalog\Model\Product $product
      * @param array $correctChildIds
      */
-    private function removeOldAssociatedProducts(\Magento\Catalog\Model\Product $product, array $correctChildIds)
+    private function removeOldAssociatedProducts(\Magento\Catalog\Model\Product $product, $correctChildIds)
     {
         $children = $product->getTypeInstance()->getUsedProducts($product);
 
@@ -271,7 +271,7 @@ class ProductsSync
      * @param bool $isAssociatedProduct
      * @return \Magento\Catalog\Model\Product
      */
-    private function setVisibility(\Magento\Catalog\Model\Product $product, bool $isAssociatedProduct)
+    private function setVisibility(\Magento\Catalog\Model\Product $product, $isAssociatedProduct)
     {
 
         if ($isAssociatedProduct) {
@@ -295,10 +295,26 @@ class ProductsSync
     private function setInventory(\Magento\Catalog\Model\Product $product, $qty)
     {
 
-        $productStock = $this->stockItemRepository->get($product->getId());
-        if ($productStock->getQty() == $qty){
-            return $product;
+        if ($product->getIsObjectNew() != true) {
+
+            $productStock = $this->stockItemRepository->get($product->getId());
+            if ($productStock->getQty() == $qty){
+                return $product;
+            } else {
+                return $this->setStockData($product, $qty);
+            }
+
+        } else {
+
+            return $this->setStockData($product, $qty);
+
         }
+
+
+    }
+
+
+    private function setStockData(\Magento\Catalog\Model\Product $product, $qty) {
 
         $product
             ->setQuantityAndStockStatus(['qty' => $qty, 'is_in_stock' => 1])
@@ -310,6 +326,7 @@ class ProductsSync
 
         return $product;
     }
+
 
 
 }
