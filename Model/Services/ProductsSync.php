@@ -37,9 +37,6 @@ class ProductsSync
         \Magento\CatalogInventory\Model\Stock\StockItemRepository $stockItemRepository
     )
     {
-
-        // \Magento\Catalog\Api\ProductRepositoryInterface $productRepository,
-
         $this->storeId = \Magento\Store\Model\Store::DEFAULT_STORE_ID;
         $this->logger = $logger;
         $this->transactionFactory = $transactionFactory;
@@ -89,7 +86,6 @@ class ProductsSync
 
     public function productSave(\Magento\Catalog\Model\Product $product, $num = 0)
     {
-
         if ($num !== 0) {
             $oldKey = $product->getUrlKey();
             $product->setUrlKey($oldKey . '-' . $num);
@@ -135,9 +131,8 @@ class ProductsSync
      */
     public function createOrUpdate($data, $isAssociatedProduct, $configurableProductsData = null, $categoryIds = null)
     {
-
         if (!isset($data['sku']) || !isset($data['name'])) {
-            throw new Exception('Data is Missing.');
+            throw new \InvalidArgumentException('Data is Missing.');
         }
 
         $product = $this->productFactory->create();
@@ -273,7 +268,6 @@ class ProductsSync
      */
     private function setVisibility(\Magento\Catalog\Model\Product $product, $isAssociatedProduct)
     {
-
         if ($isAssociatedProduct) {
             $product->setVisibility(\Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE);
             return $product;
@@ -294,7 +288,6 @@ class ProductsSync
      */
     private function setInventory(\Magento\Catalog\Model\Product $product, $qty)
     {
-
         if ($product->getIsObjectNew() != true) {
 
             $productStock = $this->stockItemRepository->get($product->getId());
@@ -310,12 +303,11 @@ class ProductsSync
 
         }
 
-
     }
 
 
-    private function setStockData(\Magento\Catalog\Model\Product $product, $qty) {
-
+    private function setStockData(\Magento\Catalog\Model\Product $product, $qty)
+    {
         $product
             ->setQuantityAndStockStatus(['qty' => $qty, 'is_in_stock' => 1])
             ->setStockData(array(
