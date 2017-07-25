@@ -96,7 +96,7 @@ class Worker
     protected function processBatch($batchSize = 50)
     {
 
-        $queueItems = $this->queueCollection->getNext($batchSize, 1);
+        $queueItems = $this->queueCollection->getNext(1, $batchSize);
         $totalProcessed = 0;
         if (count($queueItems) == 0) {
             return $this;

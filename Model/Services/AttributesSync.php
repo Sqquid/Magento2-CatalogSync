@@ -94,9 +94,9 @@ class AttributesSync
 
     }
 
-    protected function setExclusionAttribute()
+    protected function setIncludeAttribute()
     {
-      $this->findOrCreateAttribute('Exclude', 'boolean', 'Magento\Eav\Model\Entity\Attribute\Source\Boolean');
+      $this->findOrCreateAttribute('Include', 'boolean', 'Magento\Eav\Model\Entity\Attribute\Source\Boolean');
     }
 
 
@@ -107,6 +107,11 @@ class AttributesSync
      */
     public function processAttributes(\Magento\Catalog\Model\Product $product, $data)
     {
+
+        if (!$product->getSqquidInclude()) {
+            $product->setData('sqquid_include', true);
+            $this->productResource->saveAttribute($product, 'sqquid_include');
+        }
 
         if (!isset($data['Attributes'])) {
             return false;

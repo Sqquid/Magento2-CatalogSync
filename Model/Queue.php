@@ -20,10 +20,11 @@ class Queue extends AbstractModel
      *
      * @param $key
      * @param $value
+     * @param $type_id
      * @return mixed
      */
-    public function insertOrUpdate($key, $value) {
-        return $this->_getResource()->insertOrUpdate($key, $value);
+    public function insertOrUpdate($key, $value, $type_id) {
+        return $this->_getResource()->insertOrUpdate($key, $value, $type_id);
     }
 
     /**

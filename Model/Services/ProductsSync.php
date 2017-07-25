@@ -141,7 +141,7 @@ class ProductsSync
             $product->load($productId);
             $product->setIsObjectNew(false);
 
-            if ($product->getSqquidExclude() === '1') {
+            if ($product->getSqquidInclude() === "0") {
                 return false; // we need to skip it
             }
 

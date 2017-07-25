@@ -19,11 +19,11 @@ class Collection extends AbstractCollection
     /**
      * Get next items in the queue based on batch size
      *
-     * @param int $batchSize
      * @param int $type_id
+     * @param int $batchSize
      * @return $this
      */
-    public function getNext($batchSize, $type_id)
+    public function getNext($type_id, $batchSize = null)
     {
         $collection = $this
             ->addFieldToSelect('*')
@@ -31,7 +31,10 @@ class Collection extends AbstractCollection
             ->addFieldToFilter('type_id', $type_id)
             ->setOrder('id', 'asc');
 
-        $collection->getSelect()->limit($batchSize);
+        if ($batchSize) {
+            $collection->getSelect()->limit($batchSize);
+        }
+
         return $collection;
     }
 }
