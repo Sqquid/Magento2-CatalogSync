@@ -35,8 +35,7 @@ class ProductsSync
         \Magento\Framework\Registry $registry,
         \Magento\Framework\DB\TransactionFactory $transactionFactory,
         \Magento\CatalogInventory\Model\Stock\StockItemRepository $stockItemRepository
-    )
-    {
+    ) {
         $this->storeId = \Magento\Store\Model\Store::DEFAULT_STORE_ID;
         $this->logger = $logger;
         $this->transactionFactory = $transactionFactory;
@@ -59,10 +58,8 @@ class ProductsSync
         $this->initStoreUrlKeys();
     }
 
-
     /**
      * This builds up the product keys in memory for us to check if for duplicate URLs
-     * TODO: figure this out without a resourceConnection
      *
      * Dear other developers, I wasn't sure how to get all the actual values of $attribute based on store ID.
      * Maybe I missed something but I couldn't find what method I should use to retrieve this information using the
@@ -81,7 +78,6 @@ class ProductsSync
                 $this->storeUrlKeys[$result['value']] = $result['entity_id'];
             }
         }
-
     }
 
     public function productSave(\Magento\Catalog\Model\Product $product, $num = 0)
@@ -92,42 +88,39 @@ class ProductsSync
         }
 
         try {
-
             $saveTransaction = $this->transactionFactory->create();
             $saveTransaction->addObject($product);
             $saveTransaction->save();
-
-            //$product->save();
-
         } catch (\Magento\Framework\Exception\AlreadyExistsException $e) {
-
 
             /**
              * TODO: Make this better somehow
              *
-             * Dear other developers. At this point in the game I want to know if the product URL key is conflicting with anything else.
-             * It's just that I want to know if the exception is "AlreadyExistsException".. I also need to know if this exception
+             * Dear other developers. At this point in the game I want to know if the product URL
+             * key is conflicting with anything else. It's just that I want to know if the exception
+             * is "AlreadyExistsException".. I also need to know if this exception
              * pertains to the URL key. What's the best way to do this?
              *
              */
             if ($e->getMessage() == 'URL key for specified store already exists.') {
-
                 // this means is conflicting with another URL in the catalog.. maybe CMS.. maybe Categories
                 $num++;
                 $product = $this->productSave($product, $num);
-
             } else {
                 throw $e; // get caught up the stream
-
             }
         }
 
         return $product;
-
     }
 
     /**
      * Create or update a simple product, return the product
+     * @param $data
+     * @param $isAssociatedProduct
+     * @param null $configurableProductsData
+     * @param null $categoryIds
+     * @return \Magento\Catalog\Model\Product|mixed
      */
     public function createOrUpdate($data, $isAssociatedProduct, $configurableProductsData = null, $categoryIds = null)
     {
@@ -144,7 +137,6 @@ class ProductsSync
             if ($product->getSqquidInclude() === "0") {
                 return false; // we need to skip it
             }
-
         } else {
             $product->setIsObjectNew(true);
         }
@@ -177,17 +169,16 @@ class ProductsSync
         $product = $this->setUrlKey($product);
 
         if ((!$configurableProductsData || count($configurableProductsData) == 0)) {
-
             $product->setTypeId(ProductType::TYPE_SIMPLE);
 
-            if (isset($data['qty']) && !is_null($data['qty'])) {
-                $product = $this->setInventory($product, $isAssociatedProduct);
+            if (isset($data['qty']) && $data['qty'] !== null && $data['qty'] !== '') {
+                $product = $this->setInventory($product, $data['qty']);
             }
 
             return $this->productSave($product);
         }
 
-        // CONFIGURABLE STUFF !!!!
+        // CONFIGURABLE PRODUCT !!!!
 
         $product->setTypeId(\Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE);
         $product->setStockData(['use_config_manage_stock' => 1, 'is_in_stock' => 1]);
@@ -199,10 +190,10 @@ class ProductsSync
             $this->removeOldAssociatedProducts($product, array_keys($configurableProductsData));
         }
 
-        $this->storeUrlKeys[$product->getUrlKey()] = $product->getId(); // so we can check this later since the list of keys is cached.
+        // so we can check this later since the list of keys is cached.
+        $this->storeUrlKeys[$product->getUrlKey()] = $product->getId();
 
         return $product;
-
     }
 
     /**
@@ -243,7 +234,6 @@ class ProductsSync
         $product->setUrlKey($newKey);
 
         return $product;
-
     }
 
     /**
@@ -258,7 +248,6 @@ class ProductsSync
         }
 
         return $product;
-
     }
 
     /**
@@ -289,37 +278,27 @@ class ProductsSync
     private function setInventory(\Magento\Catalog\Model\Product $product, $qty)
     {
         if ($product->getId() && $product->getIsObjectNew() != true) {
-
             $productStock = $this->stockItemRepository->get($product->getId());
-            if ($productStock->getQty() == $qty){
+            if ($productStock->getQty() == $qty) {
                 return $product;
             } else {
                 return $this->setStockData($product, $qty);
             }
-
         } else {
-
             return $this->setStockData($product, $qty);
-
         }
-
     }
-
 
     private function setStockData(\Magento\Catalog\Model\Product $product, $qty)
     {
         $product
             ->setQuantityAndStockStatus(['qty' => $qty, 'is_in_stock' => 1])
-            ->setStockData(array(
+            ->setStockData([
                 'use_config_manage_stock' => 0, //'Use config settings' checkbox
                 'manage_stock' => 1, //manage stock
-                'is_in_stock' => 1, //Stock Availability
-                'qty' => $qty));
+                'is_in_stock' => $qty > 0, //Stock Availability
+                'qty' => $qty]);
 
         return $product;
     }
-
-
-
 }
-

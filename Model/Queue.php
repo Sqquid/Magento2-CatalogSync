@@ -23,7 +23,8 @@ class Queue extends AbstractModel
      * @param $type_id
      * @return mixed
      */
-    public function insertOrUpdate($key, $value, $type_id) {
+    public function insertOrUpdate($key, $value, $type_id)
+    {
         return $this->_getResource()->insertOrUpdate($key, $value, $type_id);
     }
 
@@ -31,14 +32,11 @@ class Queue extends AbstractModel
      * Set the item in the queue as processing
      *
      * @param $id
+     * @param $value
      * @return mixed
      */
-
-
-    public function setProcessing($id, $value = 1){
+    public function setProcessing($id, $value = 1)
+    {
         return $this->_getResource()->setProcessing($id, $value);
     }
-
-
 }
-

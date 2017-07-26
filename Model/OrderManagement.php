@@ -28,8 +28,7 @@ class OrderManagement implements \Sqquid\Sync\Api\OrderManagementInterface
         \Sqquid\Sync\Logger\Logger $logger,
         \Sqquid\Sync\Helper\Data $sqquidHelper,
         \Sqquid\Sync\Model\Services\OrdersSync $ordersSync
-    )
-    {
+    ) {
         $this->queue = $queue;
         $this->jsonHelper = $jsonHelper;
         $this->logger = $logger;

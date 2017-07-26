@@ -81,4 +81,32 @@ class Data extends AbstractHelper
         $s -= $m * 60;
         return $h . ':' . sprintf('%02d', $m) . ':' . sprintf('%02d', $s);
     }
+
+    //This function transforms the php.ini notation for numbers (like '2M') to an integer (2*1024*1024 in this case)
+    public function convertPHPSizeToBytes($sSize)
+    {
+        if (is_numeric($sSize)) {
+            return $sSize;
+        }
+        $sSuffix = substr($sSize, -1);
+        $iValue = substr($sSize, 0, -1);
+        switch (strtoupper($sSuffix)) {
+            case 'P':
+                $iValue *= 1024;
+                break;
+            case 'T':
+                $iValue *= 1024;
+                break;
+            case 'G':
+                $iValue *= 1024;
+                break;
+            case 'M':
+                $iValue *= 1024;
+                break;
+            case 'K':
+                $iValue *= 1024;
+                break;
+        }
+        return $iValue;
+    }
 }

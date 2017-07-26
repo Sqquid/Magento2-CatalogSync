@@ -32,9 +32,7 @@ class Worker
         \Sqquid\Sync\Model\Services\AttributesSync $attributesSync,
         \Sqquid\Sync\Model\Services\CategoriesSync $categoriesSync,
         \Magento\Cron\Model\Schedule $schedule
-
-    )
-    {
+    ) {
         $this->productsSync = $productsSync;
         $this->attributesSync = $attributesSync;
         $this->categoriesSync = $categoriesSync;
@@ -49,9 +47,7 @@ class Worker
         if (strstr($_SERVER['PHP_SELF'], 'n98-magerun2')) {
             $appState->setAreaCode('adminhtml'); // for CLI testing
         }
-
     }
-
 
     /**
      * Process queue items (Cron)
@@ -85,17 +81,14 @@ class Worker
         }
 
         return false;
-
     }
-
 
     /**
      * @param int $batchSize
      * @return $this
      */
-    protected function processBatch($batchSize = 50)
+    private function processBatch($batchSize = 50)
     {
-
         $queueItems = $this->queueCollection->getNext(1, $batchSize);
         $totalProcessed = 0;
         if (count($queueItems) == 0) {
@@ -108,7 +101,6 @@ class Worker
         $this->logger->info("# " . $queueKey . " | (Starting Queue) | Batch : " . $batchSize);
 
         foreach ($queueItems as $item) {
-
             if ($this->queueItem->getProcessing($item->getId()) == 1) {
                 continue; // we do this to make sure this isn't being consumed by another parallel cron processes
             }
@@ -116,21 +108,15 @@ class Worker
             $error = false;
 
             try {
-
                 $this->queueItem->setProcessing($item->getId());
                 $this->processQueueItem($item);
                 $totalProcessed++;
-
             } catch (\Exception $e) {
-
-                //TODO: (low priority) try and use transactions in case that the process fails. For now, add good logging for all cases
                 $error = true;
                 $this->logger->error('------------------------');
                 $this->logger->error('Queue ID# ' . $item->getId());
                 $this->logger->error($e->getMessage());
                 $this->logger->error($e->getTraceAsString());
-                //$this->logger->error(mysql_error());
-
             }
 
             if (!$error) {
@@ -138,7 +124,6 @@ class Worker
             } else {
                 $this->queueItem->setProcessing($item->getId(), 2);
             }
-
         }
 
         $memoryEnd = memory_get_usage();
@@ -153,17 +138,14 @@ class Worker
     /**
      * @param \Sqquid\Sync\Model\Queue $queueItem
      */
-    protected function processQueueItem($queueItem)
+    private function processQueueItem($queueItem)
     {
-
         $data = $this->jsonDecoder->decode($queueItem->getValue());
         $configurableProductsData = null;
 
-        if (isset($data['children'])) {
-
+        if (isset($data['Children'])) {
             //Create or Update the simple products
-            foreach ($data['children'] as $childData) {
-
+            foreach ($data['Children'] as $childData) {
                 if (!$product = $this->productsSync->createOrUpdate($childData, true)) {
                     continue;
                 }
@@ -171,9 +153,7 @@ class Worker
                 if ($attributeData = $this->attributesSync->processAttributes($product, $childData)) {
                     $configurableProductsData[$product->getId()] = $attributeData;
                 }
-
             }
-
         }
 
         $categoryIds = $this->categoriesSync->getOrCreateCategoryIds($data);
@@ -181,10 +161,5 @@ class Worker
         if ($product = $this->productsSync->createOrUpdate($data, false, $configurableProductsData, $categoryIds)) {
             $this->attributesSync->processAttributes($product, $data);
         }
-
-        return;
     }
-
-
 }
-

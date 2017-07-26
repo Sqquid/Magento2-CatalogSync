@@ -20,19 +20,17 @@ class InstallSchema implements InstallSchemaInterface
         $installer->startSetup();
 
         //START table setup
-        $table = $installer->getConnection()->newTable($installer->getTable('sqquid_queue')
-        )->addColumn(
+        $table = $installer->getConnection()->newTable($installer->getTable('sqquid_queue'))->addColumn(
             'id',
             \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
             null,
-            array(
+            [
                 'identity' => true,
                 'unsigned' => true,
                 'nullable' => false,
                 'primary' => true
-            ),
+            ],
             'Id'
-
         )->addColumn(
             'type_id',
             \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,

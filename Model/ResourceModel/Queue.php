@@ -21,8 +21,10 @@ class Queue extends AbstractDb
      *
      * @param $key
      * @param $value
+     * @param $type_id
      */
-    public function insertOrUpdate($key, $value, $type_id) {
+    public function insertOrUpdate($key, $value, $type_id)
+    {
         $connection = $this->getConnection();
 
         $data = [
@@ -42,7 +44,8 @@ class Queue extends AbstractDb
      * @param int $value
      * @return bool
      */
-    public function setProcessing($id, $value = 1) {
+    public function setProcessing($id, $value = 1)
+    {
         if ($id) {
             $this->getConnection()->update(
                 $this->getMainTable(),
@@ -56,7 +59,8 @@ class Queue extends AbstractDb
         return false;
     }
 
-    public function getProcessing($id) {
+    public function getProcessing($id)
+    {
         $select = $this->getConnection()->select()->from(
             $this->getMainTable(),
             'processing'
@@ -66,4 +70,3 @@ class Queue extends AbstractDb
         return $this->getConnection()->fetchOne($select, [':id' => $id]);
     }
 }
-

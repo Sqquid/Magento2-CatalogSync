@@ -16,9 +16,7 @@ class CategoriesSync
         \Sqquid\Sync\Helper\Data $sqquidHelper,
         \Magento\Catalog\Model\CategoryFactory $categoryFactory,
         \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryColFactory
-
-    )
-    {
+    ) {
         $this->categories = [];
         $this->rootCategories = [];
 
@@ -42,10 +40,10 @@ class CategoriesSync
             return [$this->rootCategory];
         }
 
-        $categoryIds = array();
+        $categoryIds = [];
 
         if ($this->is_multi($data['categories'])) {
-            //special case: list of categories\
+            //special case: list of categories
             foreach ($data['categories'] as $categoryArray) {
                 $categoryPath = implode("/", $categoryArray);
                 $categoryIds[] = $this->getOrCreateCategory($categoryPath);
@@ -101,7 +99,6 @@ class CategoriesSync
         $this->categories[$categoryPath] = $category->getId();
 
         return $category->getId();
-
     }
 
     protected function getCurrentCategories()
@@ -116,7 +113,10 @@ class CategoriesSync
     protected function is_multi($a)
     {
         $rv = array_filter($a, 'is_array');
-        if (count($rv) > 0) return true;
+        if (count($rv) > 0) {
+            return true;
+        }
+
         return false;
     }
 
@@ -148,7 +148,7 @@ class CategoriesSync
                     $path[] = $collection->getItemById($structure[$i])->getName();
                 }
 
-                $this->rootCategories[$category->getId()] = array('name' => array_shift($path), 'id' => $structure[0]);
+                $this->rootCategories[$category->getId()] = ['name' => array_shift($path), 'id' => $structure[0]];
 
                 if ($pathSize > 2) {
                     $this->categories[implode('/', $path)] = $category->getId();
@@ -158,6 +158,4 @@ class CategoriesSync
         return $this;
     }
 
-
 }
-

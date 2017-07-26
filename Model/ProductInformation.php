@@ -131,7 +131,6 @@ class ProductInformation implements ProductInformationInterface
      */
     public $children;
 
-
     /**
      * Gets the sku.
      *
@@ -329,7 +328,6 @@ class ProductInformation implements ProductInformationInterface
     {
         return $this->Attributes;
     }
-
 
     /**
      * Sets Brand to product

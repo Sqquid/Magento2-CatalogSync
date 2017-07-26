@@ -30,7 +30,6 @@ class AttributesSync
 
     protected $groupName;
 
-
     public function __construct(
         \Sqquid\Sync\Helper\Data $sqquidHelper,
         \Magento\Eav\Model\Entity\Attribute\Source\TableFactory $tableFactory,
@@ -45,8 +44,7 @@ class AttributesSync
         \Magento\Eav\Api\Data\AttributeGroupInterfaceFactory $attributeGroupInterfaceFactory,
         \Magento\Eav\Api\Data\AttributeGroupInterface $attributeGroupInterface,
         \Magento\Eav\Model\Entity\AttributeFactory $attributeFactory
-    )
-    {
+    ) {
 
         $this->attributeGroupInterfaceFactory = $attributeGroupInterfaceFactory;
         $this->attributeGroupInterface = $attributeGroupInterface;
@@ -71,13 +69,13 @@ class AttributesSync
         */
         $this->groupName = "Sqquid";
         $this->groupCode = $this->sqquidHelper->convertStringToCode($this->groupName);
-        $this->entityTypeId = 4;  // \Magento\Catalog\Model\Product::ENTITY
+        // maybe use something like \Magento\Catalog\Model\Product::ENTITY
+        $this->entityTypeId = 4;
         $this->attributeSetId = $productFactory->create()->getDefaultAttributeSetId();
 
         $this->sqquidGroup = $this->attributeGroupInterface->load($this->groupName, 'attribute_group_name');
 
         if (!$this->sqquidGroup->itemExists()) {
-
             $group = $this->attributeGroupInterfaceFactory->create();
             $group->setAttributeSetId($this->attributeSetId)
                 ->setAttributeGroupName($this->groupName)
@@ -87,18 +85,15 @@ class AttributesSync
             $group->save();
 
             $this->sqquidGroup = $group;
-
         }
 
-        $this->setExclusionAttribute();
-
+        $this->setIncludeAttribute();
     }
 
-    protected function setIncludeAttribute()
+    private function setIncludeAttribute()
     {
-      $this->findOrCreateAttribute('Include', 'boolean', 'Magento\Eav\Model\Entity\Attribute\Source\Boolean');
+        $this->findOrCreateAttribute('Include', 'boolean', 'Magento\Eav\Model\Entity\Attribute\Source\Boolean');
     }
-
 
     /**
      * @param \Magento\Catalog\Model\Product $product
@@ -108,7 +103,7 @@ class AttributesSync
     public function processAttributes(\Magento\Catalog\Model\Product $product, $data)
     {
 
-        if (!$product->getSqquidInclude()) {
+        if ($product->getSqquidInclude() != true) {
             $product->setData('sqquid_include', true);
             $this->productResource->saveAttribute($product, 'sqquid_include');
         }
@@ -120,9 +115,7 @@ class AttributesSync
         $productAttributeData = [];
 
         foreach ($data['Attributes'] as $attribute) {
-
-
-            if (is_null($attribute['value'])) {
+            if ($attribute['value'] === null || $attribute['value'] === '') {
                 continue;
             }
 
@@ -132,37 +125,27 @@ class AttributesSync
                 $type = $attribute['type'];
             }
 
-
             if ($result = $this->setAttributeData($product, $attribute['label'], $attribute['value'], $type)) {
                 $productAttributeData[] = $result;
             }
-
-
         }
 
         return $productAttributeData;
-
     }
 
-
-    protected function setAttributeData(\Magento\Catalog\Model\Product $product, $label, $value, $type = 'select')
+    private function setAttributeData(\Magento\Catalog\Model\Product $product, $label, $value, $type = 'select')
     {
-
         $createType = $type == 'configurable_select' ? 'select' : $type;
         $attribute = $this->findOrCreateAttribute($label, $createType);
 
-
         if ($type == 'text') {
-
             if ($product->getData($attribute->getAttributeCode()) != $value) {
                 $product->setData($attribute->getAttributeCode(), $value);
                 $this->productResource->saveAttribute($product, $attribute->getAttributeCode());
             }
-
         }
 
         if ($type == 'select' || $type == 'configurable_select') {
-
             $valueId = $this->findOrCreateValue($attribute, $value);
 
             if ($product->getAttributeText($attribute->getAttributeCode()) != $value) {
@@ -182,16 +165,13 @@ class AttributesSync
 
                 return $configurationData;
             }
-
         }
 
         return null;
     }
 
-
     public function findOrCreateValue($attribute, $value)
     {
-
         if (!isset($this->cacheAttributeValueData[$attribute->getId()])) {
             $this->cacheAttributeValueData[$attribute->getId()] = []; // just to set it up
         }
@@ -206,7 +186,6 @@ class AttributesSync
 
         return $valueId;
     }
-
 
     public function findOrCreateValueFromDatabase($attribute, $label)
     {
@@ -243,7 +222,6 @@ class AttributesSync
         return $optionId;
     }
 
-
     public function getOptionId($attribute, $label)
     {
 
@@ -267,7 +245,7 @@ class AttributesSync
         return false;
     }
 
-    protected function findOrCreateAttribute($label, $type, $source = null)
+    private function findOrCreateAttribute($label, $type, $source = null)
     {
         $code = $label . '-' . $type;
         if (isset($this->cacheAttributeData[$code])) {
@@ -277,9 +255,7 @@ class AttributesSync
         $attribute = $this->findOrCreateAttributeFromDatabase($label, $type, $source);
         $this->cacheAttributeData[$code] = $attribute;
         return $attribute;
-
     }
-
 
     public function findOrCreateAttributeFromDatabase($label, $attribute_type, $source = null)
     {
@@ -328,7 +304,6 @@ class AttributesSync
 
         $attribute->setData($data);
 
-
         $this->productAttributeRepositoryInterface->save($attribute);
 
         $attributeEntity = $this->attributeFactory->create();
@@ -341,9 +316,7 @@ class AttributesSync
         $attributeEntity->save();
 
         return $attribute;
-
     }
-
 
     public function attachAttributesFromChildData($product, $configurableProductsData)
     {
@@ -359,11 +332,9 @@ class AttributesSync
         $attributeValueData = [];
         $usedAttributeArray = [];
 
-
         foreach ($configurableProductsData as $item) { // get unique attribute IDs
 
             foreach ($item as $data) {
-
                 if (!isset($tempValueArray[$data['attribute_id']])) {
                     $tempValueArray[$data['attribute_id']] = [];
                 }
@@ -379,13 +350,11 @@ class AttributesSync
                 ];
 
                 $usedValueArray[] = $data['value_index'];
-
             }
         }
 
         foreach ($configurableProductsData as $item) { // get unique attribute IDs
             foreach ($item as $data) {
-
                 if (in_array($data['attribute_id'], $usedAttributeArray)) {
                     continue;
                 }
@@ -399,7 +368,6 @@ class AttributesSync
                 ];
 
                 $usedAttributeArray[] = $data['attribute_id'];
-
             }
         }
 
@@ -411,6 +379,4 @@ class AttributesSync
 
         return $product;
     }
-
-
 }

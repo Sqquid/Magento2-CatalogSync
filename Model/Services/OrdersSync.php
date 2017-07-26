@@ -27,8 +27,7 @@ class OrdersSync
         \Sqquid\Sync\Model\ResourceModel\Queue $queueItem,
         \Magento\Framework\Json\Helper\Data $jsonHelper,
         \Magento\Framework\Stdlib\DateTime\DateTime $date
-    )
-    {
+    ) {
         $this->sqquidHelper = $sqquidHelper;
         $this->logger = $logger;
         $this->orderRepository = $orderRepositoryInterface;
@@ -42,7 +41,6 @@ class OrdersSync
         $this->ordersToSend = [];
         $this->batchSize = 10;
     }
-
 
     /**
      * @return string
@@ -58,38 +56,32 @@ class OrdersSync
         }
 
         foreach ($this->queueItems as $item) {
-
             $error = false;
 
             try {
-
-                if (strlen($this->jsonHelper->jsonEncode($this->ordersToSend)) >= ($this->maxPostSize - ($this->batchSize * 1000))) {
+                if ((int)strlen(json_encode($this->ordersToSend)) >= (int)($this->maxPostSize * .9)) {
+                    // don't want to get close to max post size
                     break;
                 }
 
                 if ($formattedItem = $this->getFormattedOrderInfo($item)) {
                     $this->ordersToSend[] = $formattedItem;
                 }
-
             } catch (\Exception $e) {
-
                 $error = true;
 
                 $this->logger->error('Order Export Error');
                 $this->logger->error('Queue ID# ' . $item->getId());
                 $this->logger->error($e->getMessage());
                 $this->logger->error($e->getTraceAsString());
-
             }
 
             if ($error) {
                 $this->queueItem->setProcessing($item->getId(), 2);
             }
-
         }
 
         return json_encode(['Orders' => $this->ordersToSend]);
-
     }
 
     /**
@@ -97,29 +89,20 @@ class OrdersSync
      */
     public function deleteQueuedItems()
     {
-
         foreach ($this->queueItems as $item) {
             if ($item->getProcessing() == 2) {
                 continue;
             }
             $item->delete();
         }
-
     }
 
-
     /**
-     * @return bool|collection
+     * @return bool|\Sqquid\Sync\Model\ResourceModel\Queue\Collection $queueItems
      */
-    protected function getOrderQueueCollection()
+    private function getOrderQueueCollection()
     {
-
         $queueItems = $this->queueCollection->getNext(2);
-        $num = $queueItems->count();
-
-        if ($num == 0) {
-            return false;
-        }
 
         return $queueItems;
     }
@@ -128,9 +111,8 @@ class OrdersSync
      * @param $item
      * @return array|bool
      */
-    protected function getFormattedOrderInfo($item)
+    private function getFormattedOrderInfo($item)
     {
-
         $data = json_decode($item->getValue());
         $order = $this->orderRepository->get($data->id);
 
@@ -161,11 +143,9 @@ class OrdersSync
                     $cardApprovalNumber = $card->getLastTransId();
                 }
             }
-
         }
 
         $billing_data = [];
-
 
         $billing_data['ID'] = $order->getIncrementId();
         $billing_data['ID_DB'] = $order->getId();
@@ -205,7 +185,6 @@ class OrdersSync
         $productData = [];
 
         foreach ($order->getAllVisibleItems() as $item) {
-
             $product = $item->getProduct();
 
             if ($product->getSqquidInclude() === null) {
@@ -213,19 +192,15 @@ class OrdersSync
             }
 
             if ($item->getHasChildren() && $item->getProductType() != ProductType::TYPE_SIMPLE) {
-
                 $n++;
                 //Configurable
                 foreach ($item->getChildrenItems() as $childItem) {
                     $productData[]= $this->getItemInfo($childItem);
                 }
-
             } elseif ($item->getProductType() === ProductType::TYPE_SIMPLE) {//Simple
                 $n++;
                 $productData[]= $this->getItemInfo($item);
-
             }
-
         }
 
         $shippingStreet1 = "";
@@ -275,16 +250,14 @@ class OrdersSync
         $results['Products'] = $productData;
 
         return $n > 0 ? $results : false;
-
     }
 
     /**
      * @param $item
      * @return array
      */
-    protected function getItemInfo($item)
+    private function getItemInfo($item)
     {
-
         $productData = [];
 
         $productData['Item-Code'] = $item->getProduct()->getSku();
@@ -298,9 +271,5 @@ class OrdersSync
         $productData['Item-Url'] = $item->getProduct()->getProductUrl();
 
         return $productData;
-
     }
-
-
-
 }
