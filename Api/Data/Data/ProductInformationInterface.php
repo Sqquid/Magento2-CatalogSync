@@ -156,7 +156,7 @@ interface ProductInformationInterface
 
     /**
      * Sets visibility of product
-     * @param int $visibilty
+     * @param int $visibility
      * @return void
      */
     public function setVisibility($visibility);
