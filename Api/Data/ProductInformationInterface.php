@@ -259,7 +259,7 @@ interface ProductInformationInterface
     public function getUpdatedAt();
 
     /**
-     * Sets categories
+     * Sets Categories
      * @param string[]
      * @return void
      */

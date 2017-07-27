@@ -123,13 +123,13 @@ class ProductInformation implements ProductInformationInterface
      * The categories of product
      * @var string[]
      */
-    public $categories;
+    public $Categories;
 
     /**
      * The children of product
      * @var \Sqquid\Sync\Api\Data\ProductInformationInterface[]
      */
-    public $children;
+    public $Children;
 
     /**
      * Gets the sku.
@@ -501,13 +501,13 @@ class ProductInformation implements ProductInformationInterface
     }
 
     /**
-     * Sets categories
+     * Sets Categories
      * @param string[]
      * @return void
      */
     public function setCategories($categories)
     {
-        $this->categories = $categories;
+        $this->Categories = $categories;
     }
 
     /**
@@ -516,7 +516,7 @@ class ProductInformation implements ProductInformationInterface
      */
     public function getCategories()
     {
-        return $this->categories;
+        return $this->Categories;
     }
 
     /**
@@ -526,7 +526,7 @@ class ProductInformation implements ProductInformationInterface
      */
     public function setChildren($children)
     {
-        $this->children = $children;
+        $this->Children = $children;
     }
 
     /**
@@ -535,6 +535,6 @@ class ProductInformation implements ProductInformationInterface
      */
     public function getChildren()
     {
-        return $this->children;
+        return $this->Children;
     }
 }
