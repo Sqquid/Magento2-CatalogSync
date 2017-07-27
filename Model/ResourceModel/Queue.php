@@ -27,6 +27,8 @@ class Queue extends AbstractDb
     {
         $connection = $this->getConnection();
 
+        $this->getConnection()->delete($this->getMainTable(), ['`key` = ?' => $key]);
+
         $data = [
             'key' => $key,
             'value' => $value,
@@ -46,17 +48,17 @@ class Queue extends AbstractDb
      */
     public function setProcessing($id, $value = 1)
     {
-        if ($id) {
-            $this->getConnection()->update(
-                $this->getMainTable(),
-                ['processing' => $value],
-                ['id = ?' => (int)$id]
-            );
-
-            return true;
+        if (!$id) {
+            return false;
         }
 
-        return false;
+        $this->getConnection()->update(
+            $this->getMainTable(),
+            ['processing' => $value],
+            ['id = ?' => (int)$id]
+        );
+
+        return true;
     }
 
     public function getProcessing($id)

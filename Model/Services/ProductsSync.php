@@ -277,9 +277,10 @@ class ProductsSync
      */
     private function setInventory(\Magento\Catalog\Model\Product $product, $qty)
     {
-        if ($product->getId() && $product->getIsObjectNew() != true) {
+        if ($product->getIsObjectNew() != true) {
             $productStock = $this->stockItemRepository->get($product->getId());
             if ($productStock->getQty() == $qty) {
+                $productStock->save();
                 return $product;
             } else {
                 return $this->setStockData($product, $qty);
