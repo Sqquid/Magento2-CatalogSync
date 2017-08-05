@@ -195,7 +195,7 @@ class OrdersSync
                 $n++;
                 //Configurable
                 foreach ($item->getChildrenItems() as $childItem) {
-                    $productData[]= $this->getItemInfo($childItem);
+                    $productData[]= $this->getItemInfo($item, $childItem);
                 }
             } elseif ($item->getProductType() === ProductType::TYPE_SIMPLE) {//Simple
                 $n++;
@@ -254,22 +254,31 @@ class OrdersSync
 
     /**
      * @param $item
+     * @param $childItem
      * @return array
      */
-    private function getItemInfo($item)
+    protected function getItemInfo($item, $childItem = null)
     {
         $productData = [];
 
-        $productData['Item-Code'] = $item->getProduct()->getSku();
-        $productData['Item-Id'] = $item->getProduct()->getId();
-        $productData['Item-Quantity'] = number_format($item->getQtyOrdered(), 0, '', '');
-        $productData['Taxable'] = $item->getProduct()->getTaxClassId() == 0 ? "NO" : "YES";
+        if ($childItem) {
+            $productData['Item-Code'] = $childItem->getProduct()->getSku();
+            $productData['Item-Id'] = $childItem->getProduct()->getId();
+            $productData['Item-Quantity'] = number_format($childItem->getQtyOrdered(), 0, '', '');
+        } else {
+            $productData['Item-Code'] = $item->getProduct()->getSku();
+            $productData['Item-Id'] = $item->getProduct()->getId();
+            $productData['Item-Quantity'] = number_format($item->getQtyOrdered(), 0, '', '');
+        }
+
         $productData['Tax'] = number_format($item->getTaxAmount(), 2, '.', '');
+        $productData['Discount'] = number_format($childItem->getDiscountAmount(), 2, '.', '');
         $productData['Total'] = number_format($item->getRowTotalInclTax(), 2, '.', '');
-        $productData['Discount'] = number_format($item->getDiscountAmount(), 2, '.', '');
+        $productData['Taxable'] = $item->getProduct()->getTaxClassId() == 0 ? "NO" : "YES";
         $productData['Item-Unit-Price'] = number_format($item->getPrice(), 2, '.', '');
         $productData['Item-Url'] = $item->getProduct()->getProductUrl();
 
         return $productData;
+
     }
 }
