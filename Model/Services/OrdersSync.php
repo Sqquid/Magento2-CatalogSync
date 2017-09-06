@@ -272,7 +272,7 @@ class OrdersSync
         }
 
         $productData['Tax'] = number_format($item->getTaxAmount(), 2, '.', '');
-        $productData['Discount'] = number_format($childItem->getDiscountAmount(), 2, '.', '');
+        $productData['Discount'] = number_format($item->getDiscountAmount(), 2, '.', '');
         $productData['Total'] = number_format($item->getRowTotalInclTax(), 2, '.', '');
         $productData['Taxable'] = $item->getProduct()->getTaxClassId() == 0 ? "NO" : "YES";
         $productData['Item-Unit-Price'] = number_format($item->getPrice(), 2, '.', '');
