@@ -186,7 +186,7 @@ class ProductsSync
         $product = $this->attributesSync->attachAttributesFromChildData($product, $configurableProductsData);
         $product = $this->productSave($product);
 
-        if ($product->setIsObjectNew() == false) {
+        if ($product->getIsObjectNew() == false) {
             $this->removeOldAssociatedProducts($product, array_keys($configurableProductsData));
         }
 
